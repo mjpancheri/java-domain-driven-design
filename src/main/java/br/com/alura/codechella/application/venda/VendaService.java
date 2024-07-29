@@ -1,0 +1,72 @@
+package br.com.alura.codechella.application.venda;
+
+import br.com.alura.codechella.application.ingresso.DadosTipoIngresso;
+import br.com.alura.codechella.infrastructure.ingresso.Ingresso;
+import br.com.alura.codechella.infrastructure.ingresso.Tipo;
+import br.com.alura.codechella.infrastructure.ingresso.TipoRepository;
+import br.com.alura.codechella.infrastructure.usuario.Usuario;
+import br.com.alura.codechella.infrastructure.usuario.UsuarioRepository;
+import br.com.alura.codechella.infrastructure.venda.Venda;
+import br.com.alura.codechella.infrastructure.venda.VendaRepository;
+import br.com.alura.codechella.application.usuario.DadosUsuario;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+public class VendaService {
+
+    @Autowired
+    private VendaRepository repository;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private TipoRepository tipoRepository;
+
+    public DadosVenda cadastrarVenda(DadosCadastroVenda dadosVenda) {
+        Usuario usuario = usuarioRepository.findById(dadosVenda.usuario_id())
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
+
+        Venda venda = new Venda();
+        venda.setUsuario(usuario);
+
+        List<Ingresso> ingressos = new ArrayList<>();
+        dadosVenda.ingressos()
+                .forEach(i -> {
+                    Tipo tipo = tipoRepository.findById(i.tipo_id())
+                            .orElseThrow(() -> new IllegalArgumentException("Tipo de ingresso não encontrado"));
+                    Ingresso ingresso = new Ingresso(i.codigo(), tipo);
+                    ingressos.add(ingresso);
+                });
+        venda.setIngressos(ingressos);
+        repository.save(venda);
+        return converteDados(venda);
+    }
+
+    public List<DadosVenda> listarTodas() {
+        return repository.findAll().stream()
+                .map(this::converteDados)
+                .toList();
+    }
+
+    private DadosVenda converteDados(Venda venda) {
+        List<DadosTipoIngresso> ingressos =
+                venda.getIngressos().stream()
+                        .map(i -> new DadosTipoIngresso(i.getCodigo(),
+                                i.getTipo().getSetor(), i.getTipo().getDefinicao()))
+                        .toList();
+
+
+        return new DadosVenda(venda.getId(),
+                new DadosUsuario(venda.getUsuario().getId(),
+                        venda.getUsuario().getCpf(),
+                        venda.getUsuario().getNome(),
+                        venda.getUsuario().getNascimento(),
+                        venda.getUsuario().getEmail()),
+                ingressos);
+    }
+}
