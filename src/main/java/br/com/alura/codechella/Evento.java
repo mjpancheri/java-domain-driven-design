@@ -15,7 +15,6 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "eventos")
@@ -42,8 +41,8 @@ public class Evento {
         this.data = dados.data();
 
         List<Tipo> tipoIngresso = dados.tipoIngressos().stream()
-                .map(i -> new Tipo(i.formato(), i.definicao(), i.valor(), i.totalDisponivel()))
-                .collect(Collectors.toList());
+                .map(i -> new Tipo(i.setor(), i.definicao(), i.valor(), i.totalDisponivel()))
+                .toList();
 
         this.setTipoIngressos(tipoIngresso);
     }

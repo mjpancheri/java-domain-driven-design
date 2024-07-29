@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class VendaService {
@@ -27,7 +26,7 @@ public class VendaService {
         venda.setUsuario(usuario);
 
         List<Ingresso> ingressos = new ArrayList<>();
-        dadosVenda.ingressos().stream()
+        dadosVenda.ingressos()
                 .forEach(i -> {
                     Tipo tipo = tipoRepository.findById(i.tipo_id())
                             .orElseThrow(() -> new IllegalArgumentException("Tipo de ingresso não encontrado"));
@@ -41,16 +40,16 @@ public class VendaService {
 
     public List<DadosVenda> listarTodas() {
         return repository.findAll().stream()
-                .map(v -> converteDados(v))
-                .collect(Collectors.toList());
+                .map(this::converteDados)
+                .toList();
     }
 
     private DadosVenda converteDados(Venda venda) {
         List<DadosTipoIngresso> ingressos =
                 venda.getIngressos().stream()
                         .map(i -> new DadosTipoIngresso(i.getCodigo(),
-                                i.getTipo().getFormato(), i.getTipo().getDefinicao()))
-                        .collect(Collectors.toList());
+                                i.getTipo().getSetor(), i.getTipo().getDefinicao()))
+                        .toList();
 
 
         return new DadosVenda(venda.getId(),
